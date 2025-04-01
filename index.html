@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PitchMove</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background-image: url('./guitar-background.png');
+      background-size: cover;
+      background-attachment: fixed;
+      background-repeat: no-repeat;
+    }
+    .error-chord { color: red; font-weight: bold; }
+  </style>
+</head>
+<body class="bg-gray-900 bg-opacity-80 text-white min-h-screen flex items-center justify-center">
+  <div class="container mx-auto px-4">
+    <div class="bg-gray-800 shadow-md rounded-lg p-6 max-w-lg mx-auto">
+      <h1 class="text-3xl font-bold mb-4 text-center">PitchMove</h1>
+      <p class="text-gray-400 mb-4 text-center">Introduce una lista de acordes y <strong>transp&oacute;nlos</strong> por semitonos.</p>
+
+      <form id="transpose-form" class="space-y-4">
+        <div>
+          <label for="notation" class="block text-sm font-medium">Seleccionar notaci&oacute;n:</label>
+          <select id="notation" class="mt-1 block w-full border-gray-600 rounded-md shadow-sm bg-gray-700 text-white">
+            <option value="english">Inglés (C, D, E...)</option>
+            <option value="spanish">Español (Do, Re, Mi...)</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="chords" class="block text-sm font-medium">Acordes:</label>
+          <input type="text" id="chords" class="mt-1 block w-full border-gray-600 rounded-md shadow-sm bg-gray-700 text-white" placeholder="Introduce los acordes separados por comas. Ejemplo: Do, Re, Mi, Fa#...">
+        </div>
+
+        <div>
+          <label for="semitones" class="block text-sm font-medium">Transposición en semitonos:</label>
+          <input type="number" id="semitones" class="mt-1 block w-full border-gray-600 rounded-md shadow-sm bg-gray-700 text-white" placeholder="Ej: 2">
+        </div>
+
+        <button type="submit" class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600">Transponer</button>
+        <button type="button" id="clear-button" class="w-full bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 mt-2">Limpiar</button>
+      </form>
+
+      <div id="result" class="mt-6 hidden bg-gray-700 border border-gray-600 p-4 rounded-lg">
+        <h2 class="text-lg font-bold mb-2">Acordes transpuestos:</h2>
+        <p id="transposed-chords" class="text-gray-300"></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const chordMap = {
+      english: ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'],
+      spanish: ['Do', 'Do#', 'Re', 'Re#', 'Mi', 'Fa', 'Fa#', 'Sol', 'Sol#', 'La', 'La#', 'Si']
+    };
+
+    const enharmonicMap = {
+      'Cb': 'B', 'B#': 'C', 'Fb': 'E', 'E#': 'F',
+      'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#'
+    };
+
+    const enharmonicMapSpanish = {
+      'Dob': 'Si', 'Reb': 'Do#', 'Mib': 'Re#', 'Fab': 'Mi',
+      'Solb': 'Fa#', 'Lab': 'Sol#', 'Sib': 'La#'
+    };
+
+    function normalizeChord(chord) {
+      return chord.trim().replace(/\s+/g, '');
+    }
+
+    function transposeChord(chord, semitones, notation) {
+      chord = normalizeChord(chord);
+      const match = chord.match(/^([A-Ga-g#b]+|Dob|Reb|Mib|Fab|Solb|Lab|Sib|Do|Re|Mi|Fa|Sol|La|Si)(m9|m|maj7|dim7|dim|sus4|aug|7|m7|m7b5|m7#5|9)?$/);
+      if (!match) return { original: chord, transposed: null };
+
+      let baseChord = match[1];
+      let suffix = match[2] || '';
+      const chordList = chordMap[notation];
+
+      if (notation === 'english' && enharmonicMap[baseChord]) {
+        baseChord = enharmonicMap[baseChord];
+      } else if (notation === 'spanish' && enharmonicMapSpanish[baseChord]) {
+        baseChord = enharmonicMapSpanish[baseChord];
+      }
+
+      let index = chordList.indexOf(baseChord);
+      if (index === -1) return { original: chord, transposed: null };
+
+      const newIndex = (index + semitones + chordList.length) % chordList.length;
+      return { original: chord, transposed: chordList[newIndex] + suffix };
+    }
+
+    document.getElementById('transpose-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const chordsInput = document.getElementById('chords').value.trim();
+      const semitonesInput = parseInt(document.getElementById('semitones').value, 10);
+      const notation = document.getElementById('notation').value;
+
+      if (!chordsInput) return alert('Introduce una lista de acordes.');
+      if (isNaN(semitonesInput)) return alert('Introduce un número de semitonos válido.');
+
+      const chords = chordsInput.split(',').map(chord => chord.trim());
+      const results = chords.map(chord => transposeChord(chord, semitonesInput, notation));
+      const transposedChords = results.map(res => res.transposed !== null ? res.transposed : `<span class='error-chord'>${res.original}</span>`).join(', ');
+
+      document.getElementById('transposed-chords').innerHTML = transposedChords;
+      document.getElementById('result').classList.remove('hidden');
+    });
+
+    document.getElementById('clear-button').addEventListener('click', () => {
+      document.getElementById('chords').value = '';
+      document.getElementById('semitones').value = '';
+      document.getElementById('transposed-chords').innerHTML = '';
+      document.getElementById('result').classList.add('hidden');
+    });
+  </script>
+</body>
+</html>

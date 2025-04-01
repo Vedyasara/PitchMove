@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PitchMove</title>
+  <title>PitchMove - Transpone acordes al instante</title>
+  <link rel="icon" type="image/png" href="logo.png">
+  <meta property="og:title" content="PitchMove - Transpone acordes al instante">
+  <meta property="og:description" content="Una herramienta gratuita para transponer acordes musicales en notación inglesa y española. Rápido, bonito y sin complicaciones.">
+  <meta property="og:image" content="logo.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
@@ -18,12 +22,15 @@
 <body class="bg-gray-900 bg-opacity-80 text-white min-h-screen flex items-center justify-center">
   <div class="container mx-auto px-4">
     <div class="bg-gray-800 shadow-md rounded-lg p-6 max-w-lg mx-auto">
-      <h1 class="text-3xl font-bold mb-4 text-center">PitchMove</h1>
-      <p class="text-gray-400 mb-4 text-center">Introduce una lista de acordes y <strong>transp&oacute;nlos</strong> por semitonos.</p>
+      <div class="flex flex-col items-center mb-6">
+        <img src="logo.png" alt="Logo PitchMove" class="w-24 h-24 mb-2">
+        <h1 class="text-3xl font-bold text-center">PitchMove</h1>
+        <p class="text-gray-400 text-center text-sm">Transpone acordes al instante</p>
+      </div>
 
       <form id="transpose-form" class="space-y-4">
         <div>
-          <label for="notation" class="block text-sm font-medium">Seleccionar notaci&oacute;n:</label>
+          <label for="notation" class="block text-sm font-medium">Seleccionar notación:</label>
           <select id="notation" class="mt-1 block w-full border-gray-600 rounded-md shadow-sm bg-gray-700 text-white">
             <option value="english">Inglés (C, D, E...)</option>
             <option value="spanish">Español (Do, Re, Mi...)</option>
@@ -32,7 +39,7 @@
 
         <div>
           <label for="chords" class="block text-sm font-medium">Acordes:</label>
-          <input type="text" id="chords" class="mt-1 block w-full border-gray-600 rounded-md shadow-sm bg-gray-700 text-white" placeholder="Introduce los acordes separados por comas. Ejemplo: Do, Re, Mi, Fa#...">
+          <input type="text" id="chords" class="mt-1 block w-full border-gray-600 rounded-md shadow-sm bg-gray-700 text-white" placeholder="Ej: C,G,Am,F o Do,Re,Mi">
         </div>
 
         <div>
@@ -40,7 +47,7 @@
           <input type="number" id="semitones" class="mt-1 block w-full border-gray-600 rounded-md shadow-sm bg-gray-700 text-white" placeholder="Ej: 2">
         </div>
 
-        <button type="submit" class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600">Transponer</button>
+        <button type="button" id="transpose-button" class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600">Transponer</button>
         <button type="button" id="clear-button" class="w-full bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 mt-2">Limpiar</button>
       </form>
 
@@ -93,8 +100,7 @@
       return { original: chord, transposed: chordList[newIndex] + suffix };
     }
 
-    document.getElementById('transpose-form').addEventListener('submit', (e) => {
-      e.preventDefault();
+    document.getElementById('transpose-button').addEventListener('click', () => {
       const chordsInput = document.getElementById('chords').value.trim();
       const semitonesInput = parseInt(document.getElementById('semitones').value, 10);
       const notation = document.getElementById('notation').value;
@@ -115,6 +121,13 @@
       document.getElementById('semitones').value = '';
       document.getElementById('transposed-chords').innerHTML = '';
       document.getElementById('result').classList.add('hidden');
+    });
+
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        document.getElementById('transpose-button').click();
+      }
     });
   </script>
 </body>
